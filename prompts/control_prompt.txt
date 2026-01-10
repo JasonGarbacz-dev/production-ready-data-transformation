@@ -1,0 +1,19 @@
+control prompt: 
+
+Hey — can you help me summarize some sales data?
+We’ve got a CSV file with order-level transactions. I need you to generate python code for me to run locally to get at the following insights: 
+1. Total sales grouped by product_code 
+2. Total sales grouped by customer_id 
+3. Monthly sales totals based on the date column 
+
+You can skip rows where status isn’t "Completed" — we’re only looking at finalized transactions. 
+  
+The file is located at ./data/sales.csv and includes these columns: 
+- order_number 
+- customer_id 
+- transaction_amount 
+- date 
+- product_code 
+- status
+  
+  Just output everything to the terminal in a clean format — I’ll copy/paste it and run it locally.
