@@ -1,153 +1,117 @@
-# 🧠 Production-Ready Python Generator
+# Production-Ready Python Data Transformation Pattern
 
-Anyone can write Python with GPT — my GPT ships clean, production-aligned code by default.
+This repository demonstrates my approach to designing production-aligned Python data transformation logic.
 
+The example centers on a sales aggregation task, but the focus is not the aggregation itself — it’s the engineering standards applied to ensure reliability under real-world data conditions.
 
-This repo demonstrates a system-level difference between:
+This project illustrates how I structure transformation functions to be:
 
-- 🤖 **Free ChatGPT (GPT-3.5)** — functional, but brittle code generation
-- 🧩 **Custom GPT (Advanced Python Functions)** — production-ready Python by default
+- Modular and reusable  
+- Explicit about business logic  
+- Schema-aware  
+- Fault-tolerant  
+- Traceable through logging  
+- Safe under imperfect input data  
 
-Both GPTs were given the *same* natural language prompt. Each produced working code on clean data. But when tested against real-world errors, only one recovered gracefully and offered traceable, correct results.
-
----
-
-## 🎯 Purpose
-
-This project benchmarks LLM-generated Python code using:
-- ✅ Clean data
-- ⚠️ Controlled bad data (invalid dates, mixed types, missing fields)
-
-The goal: show how structured GPT behavior delivers code that’s:
-- Modular
-- Traceable
-- Fault-tolerant
-- Ready for reuse or extension
+While GPT-assisted code generation was used as an accelerator, the emphasis is on enforcing disciplined engineering patterns — not on the LLM itself.
 
 ---
 
-## 💬 The Prompt Used
+## Engineering Standard
 
-```text
-Hey — can you help me summarize some sales data?
-We’ve got a CSV file with order-level transactions. I need you to generate python code for me to run locally to get at the following insights:
+The transformation function implemented here includes:
 
-1. Total sales grouped by product_code  
-2. Total sales grouped by customer_id  
-3. Monthly sales totals based on the date column
+- Explicit input validation
+- Defensive type coercion (`errors="coerce"`)
+- Graceful handling of malformed dates and mixed types
+- Parameterization for reuse
+- Structured logging and debug controls
+- Deterministic output formatting
+- No silent failures
 
-You can skip rows where status isn’t "Completed" — we’re only looking at finalized transactions.
-
-The file is located at ./data/sales.csv and includes these columns:
-- order_number
-- customer_id
-- transaction_amount
-- date
-- product_code
-- status
-
-Just output everything to the terminal in a clean format — I’ll copy/paste it and run it locally.
-```
+The goal is not simply to “get correct output,” but to ensure predictable behavior under failure conditions.
 
 ---
 
-## 🧪 Results on Clean Data
+## Example Business Scenario
 
-### ✅ ChatGPT Output (3.5)
-```text
-=== Total Sales by Product Code ===
-product_code  transaction_amount
-     PRD-C03             4988.34
-     PRD-A12             3646.37
-     PRD-B07             3089.68
-     PRD-D55             2154.54
-```
+Prompted task:
 
-### ✅ Custom GPT Output
-```text
-📦 TOTAL SALES BY PRODUCT CODE
-product_code
-PRD-C03    4988.34
-PRD-A12    3646.37
-PRD-B07    3089.68
-PRD-D55    2154.54
-```
+- Aggregate total sales by product_code  
+- Aggregate total sales by customer_id  
+- Compute monthly sales totals  
+- Exclude non-completed transactions  
 
-🟢 Both produce accurate results, but only the Custom GPT:
-- Wraps logic in a reusable function
-- Includes a `debug=True` parameter by default
-- Logs runtime, row counts, and step checkpoints
-- Validates schema and dates
+The implementation converts this business request into a reusable transformation function capable of:
+
+- Validating schema assumptions
+- Cleaning malformed data
+- Logging row-level data loss
+- Continuing execution without hard crashes
+- Producing consistent structured output
 
 ---
 
-## ⚠️ Results on Error Data (with mixed types, invalid dates, casing mismatches)
+## Behavior Under Imperfect Data
 
-### ❌ ChatGPT Output
-```text
-ValueError: time data "12/31/2023" doesn't match format "%Y-%m-%d"
-```
-💥 Crashes on invalid date. No output.
-🟥 ChatGPT never reaches the malformed transaction_amount field.
-The first error halts execution, and there's no visibility into downstream data issues.
+Two test scenarios are included:
 
-### ✅ Custom GPT Output
-```text
-[2026-01-10 14:29:12] Starting sales summary process...
-✅ Successfully loaded 49 rows.
-Filtering to completed transactions only...
-✅ Coerced transaction_amount to numeric and dropped invalid rows.
-Remaining rows after numeric cleaning: 47
-Computing total sales by product_code...
-...
-✅ Sales summary completed in 0.01 seconds.
-```
+### Clean Data
 
-🧠 The Custom GPT:
+Both baseline GPT output and structured implementation produce correct results.
 
-✅ Coerced invalid dates using errors='coerce'
-✅ Reached the non-numeric transaction_amount value
-✅ Dropped malformed rows and logged row count
-✅ Continued to produce accurate groupings
-✅ Never failed silently or exited early
+### Corrupted / Mixed-Type Data
 
-➡️ It didn’t just run — it gracefully handled multiple data issues on it's first version.
+Only the structured implementation:
+
+- Coerces invalid dates safely
+- Handles non-numeric transaction values
+- Logs dropped rows explicitly
+- Continues execution
+- Produces final grouped outputs without terminating early
+
+The focus is system behavior — not just correctness on ideal input.
 
 ---
 
-## 📁 Repo Structure
+## Why This Matters
+
+In analytics engineering environments, most transformation logic does not fail on happy-path data.
+
+It fails when:
+
+- Date formats drift
+- Numeric fields contain strings
+- Schemas evolve
+- Upstream systems introduce unexpected edge cases
+
+This repository demonstrates a pattern for writing transformation logic that anticipates and absorbs those realities.
+
+---
+
+## Repo Structure
 
 ```bash
-├── data/                          # Clean and error test CSVs
-├── gpt_generated_code/           # Raw GPT-generated .py files (unchanged)
-├── notebooks/                    # Side-by-side test notebooks
-├── prompts/                      # Original prompt used
-├── scripts/                      # Data generators
-├── docs/                         # System instruction summary
+├── data/                    # Clean and error test CSVs
+├── gpt_generated_code/      # Raw GPT-generated .py files (unchanged)
+├── notebooks/               # Side-by-side validation notebooks
+├── prompts/                 # Original prompt used
+├── scripts/                 # Data generators
+├── docs/                    # System instruction summary
 └── README.md
 ```
 
 ---
 
-## 🧠 What This Demonstrates
+## About
 
-| Capability | ChatGPT | Custom GPT |
-|------------|---------|------------|
-| Working code on clean input | ✅ | ✅  |
-| Modularity & function structure | ❌ | ✅  |
-| Debug & runtime logging | ❌ | ✅  |
-| Handles invalid data types | ❌ | ✅  |
-| Explains what went wrong | ❌ | ✅  |
-| Ready for production use | ❌ | ✅  |
+Built by **Jason Garbacz** — Senior Analytics Engineer focused on:
 
----
+- Data workflow optimization  
+- Transformation-layer engineering  
+- Legacy-to-modern modernization  
+- Internal tooling that improves reliability and delivery speed  
 
-## 🙋‍♂️ About
+In modern analytics environments, generating Python is easy.
 
-Built by **Jason Garbacz** — focused on:
-- Internal tooling
-- AI workflow integration
-- Systems that replace ambiguity with clarity
-
-> In the age of LLMs, anyone can generate Python.
-> I build systems that generate Python you can ship.
+Designing transformation logic that survives real data is the differentiator.
